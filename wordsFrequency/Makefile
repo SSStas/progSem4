@@ -2,18 +2,17 @@
 EXECUTABLE=wordsFrequency
 
 #file(s) with source code
-SOURCE=main.c word.c
+SOURCE=main.c wordsFreq.c
 
 #compilation options
-C=gcc
-CFLAGS= -Wall -O2
+CC=gcc
+CFLAGS=-Wall -O2
 
 
 all: $(EXECUTABLE);
 
-
 $(EXECUTABLE):
-	$(C) $(CFLAGS) $(SOURCE) -o $(EXECUTABLE)
+	$(CC) $(CFLAGS) $(SOURCE) -o $(EXECUTABLE) -ldl
 		
 
 clean:
