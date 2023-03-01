@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
         printf("wordsFrequency:main.c: Arguments error\n");
         exit(1);
     }
-
+ 
     void *handles[argc - 1];
     void *dicts[argc - 1];
     char *line = NULL;
