@@ -3,7 +3,10 @@
 #include <unistd.h>
 #include "viewCreator.h"
 #include "view.h"
+#include "controller.h"
 
+
+View* ViewCreator::objView = nullptr;
 
 int main(int argc, char **argv) {
     View *view = nullptr;
@@ -18,10 +21,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    while(1) {
-        view->draw();
-        usleep(1500000);
-    }
+    Controller keyboard = Controller();
+
+    view->run(&keyboard);
+
+    delete view;
     
     return 0;
 }

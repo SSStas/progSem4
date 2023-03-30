@@ -2,8 +2,8 @@
 
 #include "view.h"
 
-class ViewCreator {
 
+class ViewCreator {
     static View* objView;
 
     public:
@@ -16,5 +16,4 @@ class ViewCreator {
 
             return objView;
         }
-
 };
