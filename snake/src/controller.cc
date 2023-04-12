@@ -34,6 +34,12 @@ void Controller::setKey(event func, char c) {
     }
 }
 
+void Controller::setKeys(event func, std::string s) {
+    for (const auto &c: s) {
+        setKey(func, c);
+    }
+}
+
 int Controller::pollKeyboard() {
     char c[4097];
     struct pollfd keyb = {0, POLLIN, 0};

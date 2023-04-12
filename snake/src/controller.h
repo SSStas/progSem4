@@ -24,6 +24,7 @@ public:
     Controller() {};
 
     void setKey(event func, char c);
+    void setKeys(event func, std::string s);
     int pollKeyboard();
 
     ~Controller() {

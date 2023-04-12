@@ -4,6 +4,7 @@
 #include "viewCreator.h"
 #include "view.h"
 #include "controller.h"
+#include "model.h"
 
 
 View* ViewCreator::objView = nullptr;
@@ -21,9 +22,9 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    Controller keyboard = Controller();
+    Model model = Model(30, 150, "wasd", 15);
 
-    view->run(&keyboard);
+    view->run(model);
 
     delete view;
     

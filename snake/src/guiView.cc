@@ -4,14 +4,14 @@
 #include "viewCreator.h"
 
 
-void GuiView::run(Controller *keyboard) { 
+void GuiView::run(Model &model) { 
     std::cout << "GuiView::run" << std::endl; 
 }
 
-void GuiView::draw() { 
-    std::cout << "GuiView::draw" << std::endl; 
+void GuiView::drawFrame() { 
+    std::cout << "GuiView::drawFrame" << std::endl; 
 }
 
-void GuiView::clean() {
+void GuiView::clean() { 
     std::cout << "GuiView::clean" << std::endl; 
 }

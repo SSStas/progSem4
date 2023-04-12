@@ -12,8 +12,9 @@ void TextView::enableScrolling() {
     printf("\033[?1049l");
 }
 
-void TextView::onStart() {
+void TextView::onStart(size_frame s) {
     isFinished = false;
+    printf("\e[8;%d;%dt", s.first + 1, s.second + 1);
     printf("\e[H\e[2J");
     disableScrolling();
 }
@@ -22,23 +23,38 @@ void TextView::finishTextView(int a) {
     isFinished = true;
 }
 
-void TextView::run(Controller *keyboard) {
+void TextView::run(Model &model) {
     auto quitFunc = std::bind(&TextView::finishTextView, this, std::placeholders::_1);
-    keyboard->setKey(quitFunc, 'q');
+    keyboard.setKey(quitFunc, 'q');
+    model.setSnakeKeys(keyboard);
 
-    onStart();
+    onStart(model.getSize());
+
+    int spendTime = 0;
+    std::list<point> rabbitsData;
+    std::list<snakeData> snakesData;
 
     while(!isFinished) {
-        keyboard->pollKeyboard();
-        draw();
+        spendTime = keyboard.pollKeyboard();
+        model.makeNextStep();
 
-        usleep(50000 * 4);
+        cleanObj(rabbitsData, snakesData, 1, 1);
+        rabbitsData.clear();
+        snakesData.clear();
+        model.getRabbitsData(rabbitsData);
+        model.getSnakesData(snakesData);
+
+        drawFrame();
+        drawRabbits(rabbitsData, 1, 1);
+        drawSnakes(snakesData, 1, 1);
+
+        usleep(100000 - spendTime);
     }
 
     enableScrolling();
 }
 
-void TextView::draw() {
+void TextView::drawFrame() {
     clean();
     horiontalLine(1, 1, width + 1, '-', '+');
     horiontalLine(height, 1, width + 1, '-', '+');
@@ -51,6 +67,20 @@ void TextView::draw() {
 void TextView::clean() {
     puts("\e[H");
     printf("\033[1;1H");
+}
+
+void TextView::cleanObj(std::list<point> &rabbitsData, std::list<snakeData> &snakesData, int moveX, int moveY) {
+    for (auto it = rabbitsData.begin(); it != rabbitsData.end(); ++it) {
+        putSymbol({it->first + moveX, it->second + moveY}, ' ');
+    }
+
+    for (auto it = snakesData.begin(); it != snakesData.end(); ++it) {
+        for (auto snakeIt = it->second.begin(); snakeIt != it->second.end(); ++snakeIt) {
+            putSymbol({snakeIt->first + moveX, snakeIt->second + moveY}, ' ');
+        }
+    }
+
+    clean();
 }
 
 void TextView::putString(point p, char *str) {
@@ -92,18 +122,33 @@ point TextView::getsz() {
 }
 
 TextView::TextView() {
+    keyboard = Controller();
     point temp = getsz();
 
     width = temp.first;
     height = temp.second;
-
+    
     tcgetattr(STDIN_FILENO, &terminalState);
-    tcgetattr(STDIN_FILENO, &attrRaw);
 
+    struct termios attrRaw = terminalState;
     cfmakeraw(&attrRaw);
     attrRaw.c_lflag |= ISIG;
 
     tcsetattr(STDIN_FILENO, TCSANOW, &attrRaw);
+}
+
+void TextView::drawRabbits(std::list<point> &rabbitsData, int moveX, int moveY) {
+    for (auto it = rabbitsData.begin(); it != rabbitsData.end(); ++it) {
+        putSymbol({it->first + moveX, it->second + moveY}, '@');
+    }
+}
+
+void TextView::drawSnakes(std::list<snakeData> &snakesData, int moveX, int moveY) {
+    for (auto it = snakesData.begin(); it != snakesData.end(); ++it) {
+        for (auto snakeIt = it->second.begin(); snakeIt != it->second.end(); ++snakeIt) {
+            putSymbol({snakeIt->first + moveX, snakeIt->second + moveY}, '*');
+        }
+    }
 }
 
 TextView::~TextView() {
