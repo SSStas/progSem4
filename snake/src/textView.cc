@@ -14,7 +14,10 @@ void TextView::enableScrolling() {
 
 void TextView::onStart(size_frame s) {
     isFinished = false;
-    printf("\e[8;%d;%dt", s.first + 1, s.second + 1);
+    printf("\e[8;%d;%dt", s.first + 2, s.second + 2);
+    point temp = getsz();
+    width = temp.first;
+    height = temp.second;
     printf("\e[H\e[2J");
     disableScrolling();
 }
@@ -31,22 +34,20 @@ void TextView::run(Model &model) {
     onStart(model.getSize());
 
     int spendTime = 0;
-    std::list<point> rabbitsData;
-    std::list<snakeData> snakesData;
+    uploadData upData;
+    deletedData delData;
 
     while(!isFinished) {
         spendTime = keyboard.pollKeyboard();
-        model.makeNextStep();
+        model.makeNextStep(upData, delData);
 
-        cleanObj(rabbitsData, snakesData, 1, 1);
-        rabbitsData.clear();
-        snakesData.clear();
-        model.getRabbitsData(rabbitsData);
-        model.getSnakesData(snakesData);
+        cleanObj(delData, 2, 2);
+        delData.clear();
+
+        drawObj(upData, 2, 2);
+        upData.clear();
 
         drawFrame();
-        drawRabbits(rabbitsData, 1, 1);
-        drawSnakes(snakesData, 1, 1);
 
         usleep(100000 - spendTime);
     }
@@ -69,15 +70,9 @@ void TextView::clean() {
     printf("\033[1;1H");
 }
 
-void TextView::cleanObj(std::list<point> &rabbitsData, std::list<snakeData> &snakesData, int moveX, int moveY) {
-    for (auto it = rabbitsData.begin(); it != rabbitsData.end(); ++it) {
+void TextView::cleanObj(deletedData &data, int moveX, int moveY) {
+    for (auto it = data.begin(); it != data.end(); ++it) {
         putSymbol({it->first + moveX, it->second + moveY}, ' ');
-    }
-
-    for (auto it = snakesData.begin(); it != snakesData.end(); ++it) {
-        for (auto snakeIt = it->second.begin(); snakeIt != it->second.end(); ++snakeIt) {
-            putSymbol({snakeIt->first + moveX, snakeIt->second + moveY}, ' ');
-        }
     }
 
     clean();
@@ -137,17 +132,27 @@ TextView::TextView() {
     tcsetattr(STDIN_FILENO, TCSANOW, &attrRaw);
 }
 
-void TextView::drawRabbits(std::list<point> &rabbitsData, int moveX, int moveY) {
-    for (auto it = rabbitsData.begin(); it != rabbitsData.end(); ++it) {
-        putSymbol({it->first + moveX, it->second + moveY}, '@');
-    }
-}
-
-void TextView::drawSnakes(std::list<snakeData> &snakesData, int moveX, int moveY) {
-    for (auto it = snakesData.begin(); it != snakesData.end(); ++it) {
-        for (auto snakeIt = it->second.begin(); snakeIt != it->second.end(); ++snakeIt) {
-            putSymbol({snakeIt->first + moveX, snakeIt->second + moveY}, '*');
+void TextView::drawObj(uploadData &data, int moveX, int moveY) {
+    char c;
+    for (auto it = data.begin(); it != data.end(); ++it) {
+        switch (it->first) {
+        case RABBIT:
+            c ='@';
+            break;
+        case SNAKE1:
+            c ='*';
+            break;
+        case SNAKE2:
+            c ='#';
+            break;
+        case SNAKE3:
+            c ='s';
+            break;
+        default:
+            c = 'X';
+            break;
         }
+        putSymbol({(it->second).first + moveX, (it->second).second + moveY}, c);
     }
 }
 

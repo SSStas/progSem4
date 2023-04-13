@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    Model model = Model(30, 150, "wasd", 15);
+    Model model = Model(30, 150, "wasd", 5);
 
     view->run(model);
 

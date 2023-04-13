@@ -40,7 +40,7 @@ class TextView: public View {
         void run(Model &model);
         void drawFrame();
         void clean();
-        void cleanObj(std::list<point> &rabbitsData, std::list<snakeData> &snakesData, int moveX, int moveY);
+        void cleanObj(deletedData &data, int moveX, int moveY);
         point getsz();
         void onStart(size_frame s);
         void finishTextView(int a);
@@ -50,8 +50,7 @@ class TextView: public View {
         void verticalLine(int x, int y, int len, char sym, char edges);
         void disableScrolling();
         void enableScrolling();
-        void drawRabbits(std::list<point> &rabbitsData, int moveX, int moveY);
-        void drawSnakes(std::list<snakeData> &snakesData, int moveX, int moveY);
+        void drawObj(uploadData &data, int moveX, int moveY);
 
         ~TextView();
 };

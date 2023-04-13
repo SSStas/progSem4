@@ -1,13 +1,13 @@
 #include "model.h"
 
-
+#include <iostream>
 const point Snake::dirVaritions[5] = {{0, 0}, {-1, 0}, {0, -1}, {1, 0}, {0, 1}};
 
 Rabbit::Rabbit(int height, int width, std::list<Snake*> &snakes, std::list<Rabbit*> &rabbits, int sc) {
     bool isGetPos;
 
     do {
-        position = {std::rand() % width, std::rand() % height};
+        position = {1 + std::rand() % (width - 1), 1 + std::rand() % (height - 1)};
         isGetPos = true;
 
         for (auto it = snakes.begin(); it != snakes.end(); ++it) {
@@ -28,11 +28,11 @@ Rabbit::Rabbit(int height, int width, std::list<Snake*> &snakes, std::list<Rabbi
     scores = sc;
 }
 
-Snake::Snake(int x, int y, int len, int direction, std::string keysMove, int color) {
+Snake::Snake(int x, int y, int len, int direction, std::string keysMove, CELL_ID id) {
     dir = (1 <= direction || direction <= 4) ? direction : 0;
     growthPoints = 0;
     this->keysMove = keysMove;
-    this->color = color;
+    this->id = id;
 
     for (int i = 0; i < len; ++i) {
         switch (dir) {
@@ -56,11 +56,11 @@ Snake::Snake(int x, int y, int len, int direction, std::string keysMove, int col
     }
 }
 
-Snake::Snake(int height, int width, int len, std::list<Snake*> &snakes, std::string keysMove, int color) {
+Snake::Snake(int height, int width, int len, std::list<Snake*> &snakes, std::string keysMove, CELL_ID id) {
     dir = 1 + (std::rand() % 4);
     growthPoints = 0;
     this->keysMove = keysMove;
-    this->color = color;
+    this->id = id;
 
     bool isGetPos;
 
@@ -106,12 +106,13 @@ void Snake::setGrowthPoints(int num) {
     growthPoints += num;
 }
 
-void Snake::move() {
+void Snake::move(deletedData &delData) {
     posParts.push_front({posParts.front().first + dirVaritions[dir].first, posParts.front().second + dirVaritions[dir].second});
     lastDir = dir;
     if (growthPoints > 0) {
         --growthPoints;
     } else {
+        delData.push_back(*(--posParts.end()));
         posParts.pop_back();
         growthPoints = 0;
     }
@@ -119,7 +120,7 @@ void Snake::move() {
 
 bool Snake::frameCollision(int height, int width) {
     int x = posParts.front().first, y = posParts.front().second;
-    return (0 > x || x > width) || (0 > y || y > height);
+    return (0 > x || x > width - 1) || (0 > y || y > height - 1);
 }
 
 bool Snake::selfCollision() {
@@ -153,8 +154,8 @@ bool Snake::isSnakePoint(point pos) {
     return false;
 }
 
-int Snake::getColor() {
-    return color;
+CELL_ID Snake::getId() {
+    return id;
 }
 
 std::string Snake::getKeys() {
@@ -195,7 +196,7 @@ Model::Model(int height, int width, std::string keysMove, int rabbitsCount) {
 
     std::srand((unsigned int) time(nullptr));
 
-    Snake *s = new Snake(height, width, 3, snakes, keysMove, 1);
+    Snake *s = new Snake(height, width, 10, snakes, keysMove, SNAKE1);
     snakes.push_back(s);
 
     for (int i = 0; i < rabbitsCount; ++i) {
@@ -204,9 +205,9 @@ Model::Model(int height, int width, std::string keysMove, int rabbitsCount) {
     }
 }
 
-void Model::makeNextStep() {
+void Model::makeNextStep(uploadData &upData, deletedData &delData) {
     for (auto it = snakes.begin(); it != snakes.end(); ++it) {
-        (*it)->move();
+        (*it)->move(delData);
     }
 
     // check snakes collisions
@@ -215,6 +216,7 @@ void Model::makeNextStep() {
     while (snakeIt != snakes.end()) {
         for (auto otherSnakeIt = snakes.begin(); otherSnakeIt != snakes.end(); ++otherSnakeIt) {
             if ((*snakeIt)->snakesCollision((*otherSnakeIt))) {
+                setDeletedSnakePos(*snakeIt, delData);
                 snakeIt = snakes.erase(snakeIt);
                 isSnakeDeleted = true;
                 break;
@@ -230,6 +232,7 @@ void Model::makeNextStep() {
     snakeIt = snakes.begin();
     while (snakeIt != snakes.end()) {
         if ((*snakeIt)->frameCollision(height, width)) {
+            setDeletedSnakePos(*snakeIt, delData);
             snakeIt = snakes.erase(snakeIt);
         } else {
             ++snakeIt;
@@ -244,17 +247,24 @@ void Model::makeNextStep() {
         Rabbit *r = new Rabbit(height, width, snakes, rabbits, 1);
         rabbits.push_back(r);
     }
+
+    getCurrentData(upData);
 }
 
-void Model::getRabbitsData(std::list<point> &data) {
+void Model::getCurrentData(uploadData &data) {
     for (auto it = rabbits.begin(); it != rabbits.end(); ++it) {
-        data.push_back((*it)->getPos());
+        data.push_back({RABBIT, (*it)->getPos()});
+    }
+    for (auto it = snakes.begin(); it != snakes.end(); ++it) {
+        for (auto snakePosIt = (*it)->posParts.begin(); snakePosIt != (*it)->posParts.end(); ++snakePosIt) {
+            data.push_back({(*it)->getId(), (*snakePosIt)});
+        }
     }
 }
 
-void Model::getSnakesData(std::list<snakeData> &data) {
-    for (auto it = snakes.begin(); it != snakes.end(); ++it) {
-        data.push_back({(*it)->getColor(), (*it)->posParts});
+void Model::setDeletedSnakePos(Snake *snake, deletedData &data) {
+    for (auto it = snake->posParts.begin(); it != snake->posParts.end(); ++it) {
+        data.push_back(*it);
     }
 }
 
